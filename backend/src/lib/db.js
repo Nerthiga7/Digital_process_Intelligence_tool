@@ -13,7 +13,10 @@ const connectDb = async () => {
     const uri = process.env.MONGODB_URI;
 
     if (!uri) {
-      throw new Error("MONGODB_URI environment variable is required");
+      throw new Error(
+        "MONGODB_URI environment variable is required. " +
+        "Set it in your Render service environment variables with your MongoDB Atlas connection string."
+      );
     }
 
     await mongoose.connect(uri, {
