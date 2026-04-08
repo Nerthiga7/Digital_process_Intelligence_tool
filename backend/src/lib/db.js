@@ -15,8 +15,6 @@ const connectDb = async () => {
       "mongodb://127.0.0.1:27017/dpi-movie-booking";
 
     await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000,
     });
 
