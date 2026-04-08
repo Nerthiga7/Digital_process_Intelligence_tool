@@ -10,13 +10,16 @@ const mongoose = require("mongoose");
 
 const connectDb = async () => {
   try {
-    const uri = process.env.MONGODB_URI;
+    const uri =
+      process.env.MONGODB_URI ||
+      "mongodb://127.0.0.1:27017/dpi-movie-booking";
 
-    if (!uri) {
-      throw new Error("MONGODB_URI is not defined");
-    }
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 10000,
+    });
 
-    await mongoose.connect(uri);
     console.log("✅ MongoDB connected");
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err.message);
