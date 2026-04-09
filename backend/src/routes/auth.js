@@ -5,6 +5,36 @@ const User = require("../models/User");
 
 const router = express.Router();
 
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password, name } = req.body || {};
+    if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(409).json({ message: "User already exists" });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name: name || email.split("@")[0],
+      email,
+      passwordHash,
+    });
+
+    const token = jwt.sign(
+      { userId: String(user._id), email: user.email, name: user.name, login_time: new Date().toISOString() },
+      process.env.JWT_SECRET || "dev_secret_change_me",
+      { expiresIn: "12h" }
+    );
+
+    return res.json({
+      token,
+      user: { id: String(user._id), name: user.name, email: user.email },
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Registration failed" });
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
     const { email, password, login_time } = req.body || {};

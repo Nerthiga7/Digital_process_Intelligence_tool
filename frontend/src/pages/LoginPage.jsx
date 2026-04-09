@@ -9,20 +9,21 @@ export default function LoginPage() {
 
   const primaryEmail = "nerthiga@gmail.com";
 
-  const [addAccount, setAddAccount] = useState(false);
+  const [registerMode, setRegisterMode] = useState(false);
   const [email, setEmail] = useState(primaryEmail);
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const effectiveEmail = useMemo(() => (addAccount ? email : primaryEmail), [addAccount, email]);
+  const effectiveEmail = useMemo(() => (registerMode ? email : primaryEmail), [registerMode, email]);
 
   async function onSubmit(e) {
     e.preventDefault();
     setErr("");
     setLoading(true);
     try {
-      const res = await api.post("/login", {
+      const endpoint = registerMode ? "/register" : "/login";
+      const res = await api.post(endpoint, {
         email: effectiveEmail,
         password,
         login_time: new Date().toISOString(),
@@ -30,7 +31,7 @@ export default function LoginPage() {
       login({ token: res.data.token, user: res.data.user });
       navigate("/overview");
     } catch (e2) {
-      setErr(e2?.response?.data?.message || "Login failed");
+      setErr(e2?.response?.data?.message || (registerMode ? "Registration failed" : "Login failed"));
     } finally {
       setLoading(false);
     }
@@ -56,12 +57,13 @@ export default function LoginPage() {
                 <div>
                   <label className="mb-1 block text-xs font-medium text-slate-300">Email</label>
                   <input
-                    value={addAccount ? email : primaryEmail}
+                    value={registerMode ? email : primaryEmail}
                     onChange={(e) => setEmail(e.target.value)}
-                    readOnly={!addAccount}
+                    readOnly={!registerMode}
+                    placeholder={registerMode ? "Enter email" : primaryEmail}
                     className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-500"
                   />
-                  {!addAccount ? (
+                  {!registerMode ? (
                     <div className="mt-1 text-xs text-slate-500">Pre-filled (readonly)</div>
                   ) : null}
                 </div>
@@ -88,20 +90,21 @@ export default function LoginPage() {
                   className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
                   type="submit"
                 >
-                  {loading ? "Logging in..." : "Login"}
+                  {loading ? (registerMode ? "Registering..." : "Logging in...") : registerMode ? "Register" : "Login"}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
-                    setAddAccount((v) => !v);
+                    const nextMode = !registerMode;
+                    setRegisterMode(nextMode);
                     setErr("");
                     setPassword("");
-                    setEmail(primaryEmail);
+                    setEmail(nextMode ? "" : primaryEmail);
                   }}
                   className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900"
                 >
-                  Add Another Account
+                  {registerMode ? "Use Primary Account" : "Add Another Account"}
                 </button>
               </div>
             </form>

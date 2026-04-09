@@ -12,6 +12,50 @@ function hourLabel(h) {
   return `${hh}:00`;
 }
 
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function buildSampleOverview() {
+  const sampleTheatres = [
+    { id: "1", name: "PVR Cinemas", bookings: 350 },
+    { id: "2", name: "Inox", bookings: 223 },
+    { id: "3", name: "Cinepolis", bookings: 477 },
+  ];
+
+  const sampleMovies = [
+    { id: "a", name: "Inception", bookings: 338, delayMin: 12 },
+    { id: "b", name: "The Dark Knight", bookings: 133, delayMin: 8 },
+    { id: "c", name: "Interstellar", bookings: 83, delayMin: 10 },
+  ];
+
+  const trends = [
+    { time: "08:00", theatresMin: 45, moviesMin: 30 },
+    { time: "09:00", theatresMin: 50, moviesMin: 28 },
+    { time: "10:00", theatresMin: 22, moviesMin: 18 },
+    { time: "11:00", theatresMin: 33, moviesMin: 15 },
+    { time: "12:00", theatresMin: 19, moviesMin: 22 },
+    { time: "13:00", theatresMin: 47, moviesMin: 16 },
+    { time: "14:00", theatresMin: 18, moviesMin: 14 },
+    { time: "15:00", theatresMin: 41, moviesMin: 16 },
+    { time: "16:00", theatresMin: 44, moviesMin: 18 },
+    { time: "17:00", theatresMin: 20, moviesMin: 20 },
+    { time: "18:00", theatresMin: 46, moviesMin: 21 },
+    { time: "19:00", theatresMin: 52, moviesMin: 27 },
+    { time: "20:00", theatresMin: 49, moviesMin: 33 },
+    { time: "21:00", theatresMin: 58, moviesMin: 44 },
+    { time: "22:00", theatresMin: 30, moviesMin: 30 },
+  ];
+
+  return {
+    trends,
+    theatreCongestion: sampleTheatres,
+    moviePopularity: sampleMovies,
+    totalBookings: 1604,
+    note: "Sample bottleneck graph generated for demonstration.",
+  };
+}
+
 router.get("/overview", async (_req, res) => {
   try {
     const { start, end } = todayRange();
@@ -27,6 +71,10 @@ router.get("/overview", async (_req, res) => {
         timestamps: 1,
       }),
     ]);
+
+    if (!bookings.length) {
+      return res.json(buildSampleOverview());
+    }
 
     // ---- Hourly bottleneck trends ----
     const hours = Array.from({ length: 15 }, (_, i) => i + 8); // 08:00..22:00

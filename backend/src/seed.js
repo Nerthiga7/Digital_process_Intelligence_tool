@@ -52,6 +52,7 @@ async function seed() {
     const user = await User.findOne({ email });
     const allMovies = await Movie.find({}).select({ _id: 1, theatreId: 1 });
     const timings = ["10AM", "1PM", "4PM", "7PM"];
+    const targetBookingCount = 36;
 
     const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const randomSeat = () => {
@@ -86,32 +87,42 @@ async function seed() {
 
     const existingToday = await Booking.countDocuments({ createdAt: { $gte: startOfDay } });
 
-    // Seed if there are no bookings today (or if reset cleared them)
-    if (existingToday === 0 && user && allMovies.length) {
-      const docs = [];
-      for (let i = 0; i < 40; i++) {
-        const m = allMovies[randomInt(0, allMovies.length - 1)];
-        const ticketCount = randomInt(1, 5);
-        const seats = Array.from({ length: ticketCount }, () => randomSeat());
-        const timing = timings[randomInt(0, timings.length - 1)];
+    if (user && allMovies.length) {
+      if (existingToday === 0 || process.env.SEED_RESET_TODAY_BOOKINGS === "true") {
+        const docs = [];
+        for (let i = 0; i < targetBookingCount; i++) {
+          const m = allMovies[randomInt(0, allMovies.length - 1)];
+          const ticketCount = randomInt(1, 5);
+          const seats = Array.from({ length: ticketCount }, () => randomSeat());
+          const timing = timings[randomInt(0, timings.length - 1)];
 
-        // Spread createdAt by hour for chart trend
-        const createdAt = new Date(startOfDay.getTime() + randomInt(0, 14) * 60 * 60 * 1000 + randomInt(0, 59) * 60 * 1000);
-        const ts = makeTimestamps(new Date(createdAt.getTime() - randomInt(30, 180) * 1000));
+          const createdAt = new Date(
+            startOfDay.getTime() + randomInt(0, 14) * 60 * 60 * 1000 + randomInt(0, 59) * 60 * 1000
+          );
+          const ts = makeTimestamps(new Date(createdAt.getTime() - randomInt(30, 180) * 1000));
 
-        docs.push({
-          userId: user._id,
-          theatreId: m.theatreId,
-          movieId: m._id,
-          timing,
-          seats: Array.from(new Set(seats)),
-          totalPrice: ticketCount * 130,
-          timestamps: ts,
-          createdAt,
-          updatedAt: createdAt,
-        });
+          docs.push({
+            userId: user._id,
+            theatreId: m.theatreId,
+            movieId: m._id,
+            timing,
+            seats: Array.from(new Set(seats)),
+            totalPrice: ticketCount * 130,
+            timestamps: ts,
+            createdAt,
+            updatedAt: createdAt,
+          });
+        }
+        await Booking.insertMany(docs);
+        // eslint-disable-next-line no-console
+        console.log(`Seeded ${docs.length} random bookings for today.`);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(
+          `Skipping booking seed because ${existingToday} bookings already exist today. ` +
+            "Set SEED_RESET_TODAY_BOOKINGS=true to reseed with 36 bookings."
+        );
       }
-      await Booking.insertMany(docs);
     }
   }
 
